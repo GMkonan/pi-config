@@ -1,0 +1,68 @@
+# Pi config
+
+Configuração compartilhável do meu [Pi Coding Agent](https://pi.dev/) na forma
+de um **Pi Package**.
+
+## O que um Pi Package compartilha
+
+O manifest `package.json` distribui oficialmente:
+
+- extensions;
+- skills;
+- prompt templates;
+- themes.
+
+Este package também declara `mcp/mcp.json`, consumido pelo `pi-mcp-adapter`.
+Configurações pessoais como provider/model, credenciais e a lista de packages
+externos não são recursos nativos do manifest; ficam documentadas em
+`config/settings.example.json` e são instaladas por `scripts/bootstrap.sh`.
+
+## Estrutura
+
+```text
+extensions/       extensões locais
+  plan-mode/      modo de planejamento read-only
+prompts/          comandos/prompt templates
+ themes/           temas do TUI
+mcp/              servidores MCP declarados pelo package
+agents/           política e futuras definições de agents
+config/           configuração de referência, sem segredos
+docs/TOOLS.md     inventário e decisões sobre ferramentas
+scripts/          bootstrap do ambiente
+```
+
+## Instalação local
+
+```bash
+git clone <este-repositório> ~/pi-config
+~/pi-config/scripts/bootstrap.sh
+```
+
+Para instalar apenas os recursos locais:
+
+```bash
+pi install ~/pi-config
+```
+
+Depois que houver um remote Git, também será possível instalar diretamente:
+
+```bash
+pi install git:github.com/GMkonan/pi-config
+```
+
+Reinicie o Pi após instalar ou atualizar extensões.
+
+## MCP
+
+O core do Pi não implementa MCP. Este setup instala `pi-mcp-adapter`, que lê o
+`mcp/mcp.json` declarado pelo package e apresenta os servidores através de uma
+tool proxy lazy. O binário `codebase-memory-mcp` deve estar no `PATH`.
+
+Veja [docs/TOOLS.md](docs/TOOLS.md) para o estado de cada ferramenta e os
+critérios para considerar um MCP Gateway no futuro.
+
+## Segurança
+
+Pi Packages podem executar código com acesso completo ao sistema. Revise toda
+extension antes de instalar. Não versione `auth.json`, tokens, chaves, arquivos
+`.env` ou configurações MCP com credenciais.

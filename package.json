@@ -1,0 +1,31 @@
+{
+  "name": "konan-pi-config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Configuração compartilhável do Pi Coding Agent",
+  "keywords": [
+    "pi-package"
+  ],
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "./extensions/custom-footer.ts",
+      "./extensions/custom-header.ts",
+      "./extensions/paste-highlight.ts",
+      "./extensions/plan-mode/index.ts"
+    ],
+    "prompts": [
+      "./prompts"
+    ],
+    "themes": [
+      "./themes"
+    ],
+    "mcp": "./mcp/mcp.json"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  }
+}

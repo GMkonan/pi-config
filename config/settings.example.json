@@ -1,0 +1,15 @@
+{
+  "theme": "catppuccin-mocha",
+  "defaultProvider": "opencode-go",
+  "defaultModel": "glm-5.3",
+  "defaultThinkingLevel": "high",
+  "tuiMode": "fullscreen",
+  "packages": [
+    "/absolute/path/to/pi-config",
+    "npm:pi-web-access",
+    "npm:@juicesharp/rpiv-voice",
+    "npm:pi-observational-memory",
+    "npm:pi-mcp-adapter",
+    "git:github.com/elpapi42/pi-fork"
+  ]
+}
