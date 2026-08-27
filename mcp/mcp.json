@@ -3,6 +3,17 @@
     "codebase-memory": {
       "command": "codebase-memory-mcp",
       "args": []
+    },
+    "slack": {
+      "url": "https://mcp.slack.com/mcp",
+      "auth": "oauth",
+      "oauth": {
+        "clientId": "${SLACK_MCP_CLIENT_ID}",
+        "clientSecret": "${SLACK_MCP_CLIENT_SECRET}",
+        "redirectUri": "http://localhost:3118/callback",
+        "scope": "search:read.public search:read.private search:read.mpim search:read.im search:read.files search:read.users files:read emoji:read channels:history groups:history mpim:history im:history channels:read groups:read mpim:read users:read users:read.email"
+      },
+      "lifecycle": "lazy"
     }
   }
 }

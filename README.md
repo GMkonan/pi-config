@@ -72,7 +72,8 @@ O bootstrap executa essa instalação automaticamente quando o binário estiver
 ausente e Nix estiver disponível.
 
 Veja [docs/TOOLS.md](docs/TOOLS.md) para o estado de cada ferramenta e os
-critérios para considerar um MCP Gateway no futuro.
+critérios para considerar um MCP Gateway no futuro. A configuração e autenticação
+do Slack estão em [docs/SLACK.md](docs/SLACK.md).
 
 ## Segurança
 
