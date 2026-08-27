@@ -17,7 +17,7 @@ Registro das peças que compõem o setup e das candidatas para adoção futura.
 | `pi-fork` | Pi Package externo | Delegar trabalho ruidoso a processos filhos que herdam o branch da sessão. |
 | `pi-mcp-adapter` | Pi Package externo | Cliente MCP lazy com uma superfície proxy pequena, necessário porque MCP não faz parte do core do Pi. |
 | `codebase-memory-mcp` | servidor MCP local | Índice persistente e knowledge graph do codebase. Declarado em `mcp/mcp.json` e instalado no perfil do usuário por `nix profile add github:DeusData/codebase-memory-mcp`. |
-| Slack MCP oficial | servidor MCP remoto | Busca e leitura do workspace via OAuth. Configurado como read-only; requer Slack app e credenciais descritos em `docs/SLACK.md`. |
+| Slack MCP oficial | servidor MCP remoto | Busca, leitura e envio de mensagens via OAuth. `chat:write` e `im:write` permitem notificações e DMs; requer Slack app e credenciais descritos em `docs/SLACK.md`. |
 
 ## Decisões de arquitetura
 

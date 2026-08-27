@@ -22,8 +22,9 @@ Aprovação de um administrador pode ser exigida pelas políticas do workspace.
    http://localhost:3118/callback
    ```
 
-3. Em OAuth & Permissions, adicione os user-token scopes de leitura declarados
-   em `mcp/mcp.json`.
+3. Em OAuth & Permissions, adicione os user-token scopes declarados em
+   `mcp/mcp.json`. O setup inclui leitura, `chat:write` para enviar mensagens e
+   `im:write` para criar/abrir DMs.
 4. Copie o Client ID e o Client Secret do app.
 
 ## Credenciais
@@ -65,16 +66,25 @@ Use o Slack MCP para procurar mensagens sobre <assunto>.
 
 ## Escrita no Slack
 
-O setup começa read-only por segurança. Para permitir ações de escrita, revise
-o impacto e adicione somente os scopes necessários tanto no Slack app quanto em
-`oauth.scope` dentro de `mcp/mcp.json`:
+O setup permite o mínimo necessário para atuar como notifier:
 
 - `chat:write` — enviar mensagens;
+- `im:write` — criar/abrir uma DM antes do envio.
+
+A identidade ou o ID pessoal do destinatário não deve ser versionado. O agente
+pode localizar o usuário em runtime com as tools de busca e usar a conversa
+retornada pelo Slack.
+
+Ações adicionais continuam desabilitadas. Se forem necessárias, revise o impacto
+e adicione somente os scopes correspondentes tanto no Slack app quanto em
+`oauth.scope` dentro de `mcp/mcp.json`, por exemplo:
+
 - `reactions:write` — adicionar reações;
-- `channels:write`, `groups:write`, `im:write`, `mpim:write` — criar conversas;
+- `channels:write`, `groups:write`, `mpim:write` — criar outras conversas;
 - `canvases:read`, `canvases:write` — operar canvases.
 
-Depois, reinstale/reautorize o app e execute novamente `/mcp-auth`.
+Após qualquer mudança de scopes, reinstale/reautorize o app e execute novamente
+`/mcp-auth`.
 
 ## Referências
 
