@@ -62,6 +62,15 @@ O core do Pi não implementa MCP. Este setup instala `pi-mcp-adapter`, que lê o
 `mcp/mcp.json` declarado pelo package e apresenta os servidores através de uma
 tool proxy lazy. O binário `codebase-memory-mcp` deve estar no `PATH`.
 
+No NixOS ele é instalado por:
+
+```bash
+nix profile add github:DeusData/codebase-memory-mcp
+```
+
+O bootstrap executa essa instalação automaticamente quando o binário estiver
+ausente e Nix estiver disponível.
+
 Veja [docs/TOOLS.md](docs/TOOLS.md) para o estado de cada ferramenta e os
 critérios para considerar um MCP Gateway no futuro.
 

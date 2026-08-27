@@ -16,7 +16,7 @@ Registro das peças que compõem o setup e das candidatas para adoção futura.
 | `pi-observational-memory` | Pi Package externo | Preservar decisões e continuidade através de compactions. |
 | `pi-fork` | Pi Package externo | Delegar trabalho ruidoso a processos filhos que herdam o branch da sessão. |
 | `pi-mcp-adapter` | Pi Package externo | Cliente MCP lazy com uma superfície proxy pequena, necessário porque MCP não faz parte do core do Pi. |
-| `codebase-memory-mcp` | servidor MCP local, configurado | Índice persistente e knowledge graph do codebase. Declarado em `mcp/mcp.json`; fica pendente somente instalar o binário no `PATH`. |
+| `codebase-memory-mcp` | servidor MCP local | Índice persistente e knowledge graph do codebase. Declarado em `mcp/mcp.json` e instalado no perfil do usuário por `nix profile add github:DeusData/codebase-memory-mcp`. |
 
 ## Decisões de arquitetura
 
