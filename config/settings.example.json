@@ -11,5 +11,9 @@
     "npm:pi-observational-memory",
     "npm:pi-mcp-adapter",
     "git:github.com/elpapi42/pi-fork"
-  ]
+  ],
+  "pi-fork": {
+    "extensions": [],
+    "offline": true
+  }
 }

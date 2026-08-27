@@ -16,6 +16,7 @@ Este package também declara `mcp/mcp.json`, consumido pelo `pi-mcp-adapter`.
 Configurações pessoais como provider/model, credenciais e a lista de packages
 externos não são recursos nativos do manifest; ficam documentadas em
 `config/settings.example.json` e são instaladas por `scripts/bootstrap.sh`.
+O bootstrap não sobrescreve provider, model ou credenciais existentes.
 
 ## Estrutura
 
@@ -23,7 +24,7 @@ externos não são recursos nativos do manifest; ficam documentadas em
 extensions/       extensões locais
   plan-mode/      modo de planejamento read-only
 prompts/          comandos/prompt templates
- themes/           temas do TUI
+themes/           temas do TUI
 mcp/              servidores MCP declarados pelo package
 agents/           política e futuras definições de agents
 config/           configuração de referência, sem segredos
@@ -51,6 +52,9 @@ pi install git:github.com/GMkonan/pi-config
 ```
 
 Reinicie o Pi após instalar ou atualizar extensões.
+
+No NixOS, caso `/voice` deixe de carregar as bibliotecas nativas depois de um
+update, execute `scripts/repatch-voice.sh`.
 
 ## MCP
 

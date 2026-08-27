@@ -16,12 +16,13 @@ Registro das peças que compõem o setup e das candidatas para adoção futura.
 | `pi-observational-memory` | Pi Package externo | Preservar decisões e continuidade através de compactions. |
 | `pi-fork` | Pi Package externo | Delegar trabalho ruidoso a processos filhos que herdam o branch da sessão. |
 | `pi-mcp-adapter` | Pi Package externo | Cliente MCP lazy com uma superfície proxy pequena, necessário porque MCP não faz parte do core do Pi. |
-| `codebase-memory-mcp` | servidor MCP local | Índice persistente e knowledge graph do codebase. Declarado em `mcp/mcp.json`. |
+| `codebase-memory-mcp` | servidor MCP local, configurado | Índice persistente e knowledge graph do codebase. Declarado em `mcp/mcp.json`; fica pendente somente instalar o binário no `PATH`. |
 
 ## Decisões de arquitetura
 
-- Observational memory roda na sessão principal. Não é carregada deliberadamente
-  nos forks efêmeros, evitando chamadas de observer/reflector sem benefício.
+- Observational memory roda na sessão principal. `settings.json` configura
+  `pi-fork.extensions: []`, então filhos efêmeros não carregam extensions e não
+  fazem chamadas de observer/reflector sem benefício.
 - `plan-mode` substitui o antigo subagent `plan`.
 - O subagent `build`, o agent `plan`, a extensão local `subagent` e o prompt
   `/plan-build` foram removidos. `pi-fork` cobre a delegação necessária sem uma
