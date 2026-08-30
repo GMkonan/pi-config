@@ -8,6 +8,7 @@
     "/absolute/path/to/pi-config",
     "npm:pi-web-access",
     "npm:@juicesharp/rpiv-voice",
+    "npm:@juicesharp/rpiv-i18n",
     "npm:pi-observational-memory",
     "npm:pi-mcp-adapter",
     "git:github.com/elpapi42/pi-fork"

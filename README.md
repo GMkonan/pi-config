@@ -56,6 +56,11 @@ Reinicie o Pi após instalar ou atualizar extensões.
 No NixOS, caso `/voice` deixe de carregar as bibliotecas nativas depois de um
 update, execute `scripts/repatch-voice.sh`.
 
+O bootstrap instala `@juicesharp/rpiv-i18n` e, quando ainda não existe uma
+preferência, seleciona `pt-BR`. Assim o Whisper recebe português como idioma
+fixo em vez de detectar o idioma a cada fala. A preferência fica em
+`~/.config/rpiv-i18n/locale.json`; também pode ser alterada por `/languages`.
+
 ## MCP
 
 O core do Pi não implementa MCP. Este setup instala `pi-mcp-adapter`, que lê o
