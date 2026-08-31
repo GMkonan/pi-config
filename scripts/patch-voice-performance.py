@@ -19,6 +19,7 @@ SUPPORTED_VERSION = "2.8.0"
 ENGINE_MARKER = "konan-pi-config: cache the recognizer"
 PIPELINE_MARKER = "konan-pi-config: configurable partial decoding"
 COMMIT_MARKER = "konan-pi-config: await the authoritative final decode"
+SHUTDOWN_MARKER = "konan-pi-config: handle close-only microphone shutdown"
 
 
 def replace_exact(source: str, old: str, new: str, label: str) -> str:
@@ -52,7 +53,8 @@ def main() -> int:
     engine_patched = ENGINE_MARKER in engine
     pipeline_patched = PIPELINE_MARKER in pipeline
     commit_patched = COMMIT_MARKER in command
-    if engine_patched and pipeline_patched and commit_patched:
+    shutdown_patched = SHUTDOWN_MARKER in pipeline
+    if engine_patched and pipeline_patched and commit_patched and shutdown_patched:
         print(f"voice performance patch already applied to rpiv-voice {version}")
         return 0
 
@@ -114,6 +116,14 @@ def main() -> int:
             "\tif (pulseTick) clearInterval(pulseTick);\n\tif (!controller.signal.aborted) controller.abort();\n\tsttEngine.release();\n\treturn result;\n}",
             "\tif (pulseTick) clearInterval(pulseTick);\n\tif (!controller.signal.aborted) controller.abort();\n\n\t// konan-pi-config: await the authoritative final decode after stopping the\n\t// microphone. This makes Enter safe even when rolling partials are disabled.\n\tlet finalizedTranscript = \"\";\n\tif (pipelineHandle) {\n\t\ttry {\n\t\t\tfinalizedTranscript = await pipelineHandle.finalTranscriptPromise;\n\t\t} catch {\n\t\t\t// Per-segment recognition errors are already logged by the pipeline.\n\t\t}\n\t}\n\tif (result.intent === \"commit\" && finalizedTranscript) {\n\t\treturn { ...result, transcript: finalizedTranscript };\n\t}\n\treturn result;\n}",
             "authoritative final transcript",
+        )
+
+    if not shutdown_patched:
+        pipeline = replace_exact(
+            pipeline,
+            "function waitForMicShutdown(mic: DecibriLike, signal: AbortSignal, onFinish: () => Promise<void>): Promise<void> {\n\treturn new Promise<void>((resolve) => {\n\t\tconst onAbort = () => {\n\t\t\tmic.stop();\n\t\t};\n\t\tconst finish = async () => {\n\t\t\tsignal.removeEventListener(\"abort\", onAbort);\n\t\t\tawait onFinish();\n\t\t\tresolve();\n\t\t};\n\t\tmic.once(\"end\", finish);\n\t\tmic.once(\"error\", finish);\n\t\tif (signal.aborted) {\n\t\t\tmic.stop();\n\t\t} else {\n\t\t\tsignal.addEventListener(\"abort\", onAbort, { once: true });\n\t\t}\n\t});\n}\n",
+            "function waitForMicShutdown(mic: DecibriLike, signal: AbortSignal, onFinish: () => Promise<void>): Promise<void> {\n\treturn new Promise<void>((resolve) => {\n\t\tlet finished = false;\n\t\tconst onAbort = () => {\n\t\t\tmic.stop();\n\t\t};\n\t\t// konan-pi-config: handle close-only microphone shutdown. decibri may\n\t\t// emit close rather than end when stop() is called from the Enter path.\n\t\tconst finish = async () => {\n\t\t\tif (finished) return;\n\t\t\tfinished = true;\n\t\t\tsignal.removeEventListener(\"abort\", onAbort);\n\t\t\tawait onFinish();\n\t\t\tresolve();\n\t\t};\n\t\tmic.once(\"end\", finish);\n\t\tmic.once(\"error\", finish);\n\t\tmic.once(\"close\", finish);\n\t\tif (signal.aborted) {\n\t\t\tmic.stop();\n\t\t} else {\n\t\t\tsignal.addEventListener(\"abort\", onAbort, { once: true });\n\t\t}\n\t});\n}\n",
+            "close-only microphone shutdown",
         )
 
     engine_path.write_text(engine)
