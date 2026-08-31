@@ -8,6 +8,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 "$SCRIPT_DIR/patch-voice-model-selector.py"
+"$SCRIPT_DIR/patch-voice-performance.py"
 
 PATCH=$(command -v patchelf || ls /nix/store/*patchelf*/bin/patchelf 2>/dev/null | head -1)
 if [ -z "$PATCH" ]; then

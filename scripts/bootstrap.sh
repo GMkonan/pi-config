@@ -17,6 +17,7 @@ pi install npm:pi-mcp-adapter
 pi install git:github.com/elpapi42/pi-fork
 
 "$root/scripts/patch-voice-model-selector.py"
+"$root/scripts/patch-voice-performance.py"
 
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 if [[ "$config_home" != /* ]]; then

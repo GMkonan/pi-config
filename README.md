@@ -68,9 +68,11 @@ fica em `~/.config/rpiv-voice/voice.json`:
 
 O `rpiv-voice` 2.8.0 ainda fixa o modelo `base` upstream. Por isso
 `scripts/patch-voice-model-selector.py` aplica um patch versionado que aceita
-somente `base` ou `small`, mantendo-os em diretórios separados. O script falha
-com segurança quando a versão instalada muda e exige revisão antes de alterar
-código de uma versão futura.
+somente `base` ou `small`, mantendo-os em diretórios separados. Para tornar o
+`small` utilizável, `scripts/patch-voice-performance.py` mantém o recognizer em
+cache, desativa redecodificações parciais caras nesse modelo e aguarda a
+transcrição final ao pressionar Enter. Os scripts falham com segurança quando
+a versão instalada muda e exigem revisão antes de alterar uma versão futura.
 
 ## MCP
 
