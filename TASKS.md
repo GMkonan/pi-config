@@ -8,8 +8,8 @@ Pendências pequenas do setup do Pi, para atacar uma por vez.
 - [x] **Performance do voice:** manter o recognizer em cache, evitar redecodificações parciais repetidas no `small` e finalizar corretamente ao pressionar Enter.
 - [ ] **Benchmark do voice:** comparar precisão e latência de `base` e `small` com frases fixas em português e termos técnicos.
 - [ ] **Vocabulário do voice:** após o benchmark, avaliar correções determinísticas para termos recorrentes como MCP, NixOS, worktree e Dev Container.
-- [ ] **Indicador de imagem colada:** ao colar uma imagem no editor, exibir um marcador destacado como `image 1`, `image 2`, etc., semelhante ao OpenCode e ao `paste-highlight` usado para textos grandes.
-- [ ] **Teclas no tmux:** habilitar `extended-keys` e formato `csi-u` para distinguir Enter, Shift+Enter e Ctrl+Enter.
+- [x] **Indicador de imagem colada:** ao colar uma imagem no editor, exibir um marcador destacado como `image 1`, `image 2`, etc., semelhante ao OpenCode e ao `paste-highlight` usado para textos grandes.
+- [x] **Teclas no tmux:** habilitar `extended-keys`, formato `csi-u` e suporte `extkeys` do Ghostty para distinguir Enter, Shift+Enter e Ctrl+Enter.
 
 ## Dev Containers e sessões
 

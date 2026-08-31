@@ -7,7 +7,7 @@ Registro das peças que compõem o setup e das candidatas para adoção futura.
 | Ferramenta | Tipo | Papel |
 |---|---|---|
 | `custom-header` / `custom-footer` | extensions locais | Exibir projeto, branch, modelo, modo e uso de contexto. |
-| `paste-highlight` | extension local | Destacar referências a blocos colados no editor. |
+| `paste-highlight` | extension local | Destacar blocos de texto colados e representar imagens do clipboard como `[image N]` antes de restaurar seus paths no envio. |
 | `plan-mode` | extension local | Planejamento read-only na sessão principal, com bash allowlisted e execução acompanhada. |
 | `/review` | prompt template | Revisar mudanças staged sem alterá-las. |
 | `catppuccin-mocha` | theme | Tema do TUI. |
