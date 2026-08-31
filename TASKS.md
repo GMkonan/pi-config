@@ -4,7 +4,8 @@ Pendências pequenas do setup do Pi, para atacar uma por vez.
 
 ## Experiência de uso
 
-- [ ] **Voice com Whisper small:** adicionar seletor `base`/`small` ao `rpiv-voice`, manter os modelos separados e comparar precisão e latência com frases fixas em português e termos técnicos.
+- [x] **Voice com Whisper small:** adicionar seletor versionado `base`/`small` ao `rpiv-voice`, manter os modelos separados e configurar o modelo `small` multilingual int8.
+- [ ] **Benchmark do voice:** comparar precisão e latência de `base` e `small` com frases fixas em português e termos técnicos.
 - [ ] **Vocabulário do voice:** após o benchmark, avaliar correções determinísticas para termos recorrentes como MCP, NixOS, worktree e Dev Container.
 - [ ] **Indicador de imagem colada:** ao colar uma imagem no editor, exibir um marcador destacado como `image 1`, `image 2`, etc., semelhante ao OpenCode e ao `paste-highlight` usado para textos grandes.
 - [ ] **Teclas no tmux:** habilitar `extended-keys` e formato `csi-u` para distinguir Enter, Shift+Enter e Ctrl+Enter.

@@ -53,13 +53,24 @@ pi install git:github.com/GMkonan/pi-config
 
 Reinicie o Pi após instalar ou atualizar extensões.
 
-No NixOS, caso `/voice` deixe de carregar as bibliotecas nativas depois de um
-update, execute `scripts/repatch-voice.sh`.
+No NixOS, depois de atualizar `rpiv-voice`, execute
+`scripts/repatch-voice.sh`. O script reaplica tanto o seletor local de modelo
+quanto os patches das bibliotecas nativas.
 
-O bootstrap instala `@juicesharp/rpiv-i18n` e, quando ainda não existe uma
-preferência, seleciona `pt-BR`. Assim o Whisper recebe português como idioma
-fixo em vez de detectar o idioma a cada fala. A preferência fica em
-`~/.config/rpiv-i18n/locale.json`; também pode ser alterada por `/languages`.
+O bootstrap instala `@juicesharp/rpiv-i18n`, seleciona `pt-BR` e configura o
+Whisper `small` em instalações novas. O idioma fica em
+`~/.config/rpiv-i18n/locale.json` e pode ser alterado por `/languages`; o modelo
+fica em `~/.config/rpiv-voice/voice.json`:
+
+```json
+{ "whisperModelType": "small" }
+```
+
+O `rpiv-voice` 2.8.0 ainda fixa o modelo `base` upstream. Por isso
+`scripts/patch-voice-model-selector.py` aplica um patch versionado que aceita
+somente `base` ou `small`, mantendo-os em diretórios separados. O script falha
+com segurança quando a versão instalada muda e exige revisão antes de alterar
+código de uma versão futura.
 
 ## MCP
 

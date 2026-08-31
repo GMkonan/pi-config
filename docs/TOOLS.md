@@ -12,7 +12,7 @@ Registro das peças que compõem o setup e das candidatas para adoção futura.
 | `/review` | prompt template | Revisar mudanças staged sem alterá-las. |
 | `catppuccin-mocha` | theme | Tema do TUI. |
 | `pi-web-access` | Pi Package externo | Pesquisa e leitura de conteúdo web. |
-| `@juicesharp/rpiv-voice` | Pi Package externo | Ditado local por voz com Whisper base multilingual int8. |
+| `@juicesharp/rpiv-voice` | Pi Package externo com patch local versionado | Ditado local em `pt-BR` com seletor `base`/`small`; atualmente configurado para Whisper small multilingual int8. |
 | `@juicesharp/rpiv-i18n` | Pi Package externo | Fixa `pt-BR` para o voice, evitando autodetecção por fala, e localiza a interface das extensões rpiv. |
 | `pi-observational-memory` | Pi Package externo | Preservar decisões e continuidade através de compactions. |
 | `pi-fork` | Pi Package externo | Delegar trabalho ruidoso a processos filhos que herdam o branch da sessão. |

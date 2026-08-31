@@ -16,6 +16,8 @@ pi install npm:pi-observational-memory
 pi install npm:pi-mcp-adapter
 pi install git:github.com/elpapi42/pi-fork
 
+"$root/scripts/patch-voice-model-selector.py"
+
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 if [[ "$config_home" != /* ]]; then
   config_home="$HOME/.config"
@@ -25,6 +27,13 @@ if [[ ! -e "$locale_config" ]]; then
   mkdir -p "$(dirname "$locale_config")"
   printf '%s\n' '{ "locale": "pt-BR" }' > "$locale_config"
   chmod 600 "$locale_config"
+fi
+
+voice_config="$config_home/rpiv-voice/voice.json"
+if [[ ! -e "$voice_config" ]]; then
+  mkdir -p "$(dirname "$voice_config")"
+  printf '%s\n' '{ "whisperModelType": "small" }' > "$voice_config"
+  chmod 600 "$voice_config"
 fi
 
 if ! command -v codebase-memory-mcp >/dev/null 2>&1; then
