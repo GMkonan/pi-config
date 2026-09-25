@@ -9,6 +9,7 @@ Registro das peças que compõem o setup e das candidatas para adoção futura.
 | `custom-header` / `custom-footer` | extensions locais | Exibir projeto, branch, modelo, modo e uso de contexto. |
 | `paste-highlight` | extension local | Destacar blocos de texto colados e representar imagens do clipboard como `[image N]` antes de restaurar seus paths no envio. |
 | `plan-mode` | extension local | Planejamento read-only na sessão principal, com bash allowlisted e execução acompanhada. |
+| `task-title` | extension local | Exibir no terminal/tmux o nome da sessão e se o agente está trabalhando. |
 | `/review` | prompt template | Revisar mudanças staged sem alterá-las. |
 | `catppuccin-mocha` | theme | Tema do TUI. |
 | `pi-web-access` | Pi Package externo | Pesquisa e leitura de conteúdo web. |
@@ -17,7 +18,7 @@ Registro das peças que compõem o setup e das candidatas para adoção futura.
 | `pi-observational-memory` | Pi Package externo | Preservar decisões e continuidade através de compactions. |
 | `pi-fork` | Pi Package externo | Delegar trabalho ruidoso a processos filhos que herdam o branch da sessão. |
 | `pi-mcp-adapter` | Pi Package externo | Cliente MCP lazy com uma superfície proxy pequena, necessário porque MCP não faz parte do core do Pi. |
-| `codebase-memory-mcp` | servidor MCP local | Índice persistente e knowledge graph do codebase. Declarado em `mcp/mcp.json` e instalado no perfil do usuário por `nix profile add github:DeusData/codebase-memory-mcp`. |
+| `codebase-memory-mcp` | servidor MCP local | Índice persistente e knowledge graph do codebase. Declarado em `mcp/mcp.json` e instalado declarativamente pelo flake do sistema. |
 | Slack MCP oficial | servidor MCP remoto | Busca, leitura e envio de mensagens via OAuth. `chat:write` e `im:write` permitem notificações e DMs; requer Slack app e credenciais descritos em `docs/SLACK.md`. |
 
 ## Decisões de arquitetura

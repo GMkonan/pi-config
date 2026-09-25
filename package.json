@@ -12,7 +12,8 @@
       "./extensions/custom-footer.ts",
       "./extensions/custom-header.ts",
       "./extensions/paste-highlight.ts",
-      "./extensions/plan-mode/index.ts"
+      "./extensions/plan-mode/index.ts",
+      "./extensions/task-title.ts"
     ],
     "prompts": [
       "./prompts"

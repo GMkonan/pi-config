@@ -9,12 +9,12 @@ if ! command -v pi >/dev/null 2>&1; then
 fi
 
 pi install "$root"
-pi install npm:pi-web-access
-pi install npm:@juicesharp/rpiv-voice
-pi install npm:@juicesharp/rpiv-i18n
-pi install npm:pi-observational-memory
-pi install npm:pi-mcp-adapter
-pi install git:github.com/elpapi42/pi-fork
+pi install npm:pi-web-access@0.30.0
+pi install npm:@juicesharp/rpiv-voice@2.8.0
+pi install npm:@juicesharp/rpiv-i18n@2.8.0
+pi install npm:pi-observational-memory@3.1.4
+pi install npm:pi-mcp-adapter@2.34.0
+pi install git:github.com/elpapi42/pi-fork@e69725c396030cb9e3b119286beca53f47a2305f
 
 "$root/scripts/patch-voice-model-selector.py"
 "$root/scripts/patch-voice-performance.py"
@@ -38,19 +38,15 @@ if [[ ! -e "$voice_config" ]]; then
 fi
 
 if ! command -v codebase-memory-mcp >/dev/null 2>&1; then
-  if command -v nix >/dev/null 2>&1; then
-    nix profile add github:DeusData/codebase-memory-mcp
-  else
-    cat <<'EOF'
+  cat <<'EOF'
 
-AVISO: codebase-memory-mcp ainda não está no PATH e Nix não está disponível.
-Revise e instale o binário seguindo:
+AVISO: codebase-memory-mcp não está no PATH.
+Instale-o pelo gerenciador de sistema antes de usar o servidor declarado em
+mcp/mcp.json. No NixOS deste setup, o flake fornece esse binário.
+
+Instruções para outros sistemas:
 https://github.com/DeusData/codebase-memory-mcp#quick-start
-
-O servidor já está declarado em mcp/mcp.json e será iniciado sob demanda pelo
-pi-mcp-adapter assim que o binário existir.
 EOF
-  fi
 fi
 
 echo

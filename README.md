@@ -16,13 +16,16 @@ Este package também declara `mcp/mcp.json`, consumido pelo `pi-mcp-adapter`.
 Configurações pessoais como provider/model, credenciais e a lista de packages
 externos não são recursos nativos do manifest; ficam documentadas em
 `config/settings.example.json` e são instaladas por `scripts/bootstrap.sh`.
-O bootstrap não sobrescreve provider, model ou credenciais existentes.
+O bootstrap não sobrescreve provider, model ou credenciais existentes. As
+versões dos packages externos são fixadas para que uma instalação limpa seja
+reproduzível e não receba mudanças incompatíveis silenciosamente.
 
 ## Estrutura
 
 ```text
 extensions/       extensões locais
   plan-mode/      modo de planejamento read-only
+  task-title.ts   título da tarefa e estado do Pi no terminal/tmux
 prompts/          comandos/prompt templates
 themes/           temas do TUI
 mcp/              servidores MCP declarados pelo package
@@ -35,7 +38,7 @@ scripts/          bootstrap do ambiente
 ## Instalação local
 
 ```bash
-git clone <este-repositório> ~/pi-config
+git clone https://github.com/GMkonan/pi-config ~/pi-config
 ~/pi-config/scripts/bootstrap.sh
 ```
 
@@ -45,7 +48,7 @@ Para instalar apenas os recursos locais:
 pi install ~/pi-config
 ```
 
-Depois que houver um remote Git, também será possível instalar diretamente:
+Também é possível instalar diretamente sem manter um clone editável:
 
 ```bash
 pi install git:github.com/GMkonan/pi-config
@@ -53,9 +56,10 @@ pi install git:github.com/GMkonan/pi-config
 
 Reinicie o Pi após instalar ou atualizar extensões.
 
-No NixOS, depois de atualizar `rpiv-voice`, execute
-`scripts/repatch-voice.sh`. O script reaplica tanto o seletor local de modelo
-quanto os patches das bibliotecas nativas.
+O `rpiv-voice` e o `rpiv-i18n` permanecem fixados em `2.8.0`, versão revisada
+pelos patches locais. Antes de atualizar esse par, revise o upstream e adapte os
+scripts; `scripts/repatch-voice.sh` reaplica tanto o seletor local de modelo
+quanto os patches de desempenho somente à versão suportada.
 
 O bootstrap instala `@juicesharp/rpiv-i18n`, seleciona `pt-BR` e configura o
 Whisper `small` em instalações novas. O idioma fica em
@@ -80,14 +84,9 @@ O core do Pi não implementa MCP. Este setup instala `pi-mcp-adapter`, que lê o
 `mcp/mcp.json` declarado pelo package e apresenta os servidores através de uma
 tool proxy lazy. O binário `codebase-memory-mcp` deve estar no `PATH`.
 
-No NixOS ele é instalado por:
-
-```bash
-nix profile add github:DeusData/codebase-memory-mcp
-```
-
-O bootstrap executa essa instalação automaticamente quando o binário estiver
-ausente e Nix estiver disponível.
+No NixOS deste setup, o flake instala o binário declarativamente. O bootstrap
+apenas verifica se ele está no `PATH`; ele não modifica o perfil Nix nem instala
+dependências do sistema.
 
 Veja [docs/TOOLS.md](docs/TOOLS.md) para o estado de cada ferramenta e os
 critérios para considerar um MCP Gateway no futuro. A configuração e autenticação
