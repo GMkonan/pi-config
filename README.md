@@ -25,7 +25,7 @@ reproduzível e não receba mudanças incompatíveis silenciosamente.
 ```text
 extensions/       extensões locais
   task-title.ts   título da tarefa e estado do Pi no terminal/tmux
-  working-indicator.ts  indicador animado durante respostas
+  working-indicator.ts  spinner padrão com frases do Pi Everywhere
 prompts/          comandos/prompt templates
 skills/           skills globais distribuídas pelo package
 themes/           temas do TUI
@@ -64,12 +64,6 @@ ajusta apenas o runtime path dos addons npm para o caminho estável do `nix-ld`.
 O idioma permanece em
 `~/.config/rpiv-i18n/locale.json`, criado como `pt-BR` em instalações novas e
 alterável por `/languages`.
-
-O `pi-lsp-adapter` fica fixado em `0.1.3`. Sua configuração padrão está em
-`config/lsp.example.json`: servidores iniciam sob demanda, usam binários já
-disponíveis no sistema e nunca são instalados automaticamente. O bootstrap
-copia essa configuração para `~/.pi/agent/lsp.json` somente quando o arquivo
-ainda não existe.
 
 ## MCP
 

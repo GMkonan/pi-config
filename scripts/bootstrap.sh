@@ -10,15 +10,18 @@ fi
 
 agent_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
 settings_file="$agent_dir/settings.json"
-pi_fork_sources="$(node - "$settings_file" <<'NODE'
+obsolete_sources="$(node - "$settings_file" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");
 const settingsPath = process.argv[2];
 const settings = fs.existsSync(settingsPath)
   ? JSON.parse(fs.readFileSync(settingsPath, "utf8"))
   : {};
+const obsoletePackages = ["pi-fork", "pi-lsp-adapter"];
 const sources = Array.isArray(settings.packages)
-  ? settings.packages.filter(source => typeof source === "string" && source.includes("pi-fork"))
+  ? settings.packages.filter(source =>
+      typeof source === "string" && obsoletePackages.some(name => source.includes(name)),
+    )
   : [];
 settings.enableInstallTelemetry = false;
 delete settings["pi-fork"];
@@ -31,7 +34,7 @@ NODE
 
 while IFS= read -r source; do
   [[ -n "$source" ]] && pi remove "$source"
-done <<< "$pi_fork_sources"
+done <<< "$obsolete_sources"
 
 pi install "$root"
 pi install npm:pi-web-access@0.31.0
@@ -39,15 +42,7 @@ pi install npm:@juicesharp/rpiv-voice@2.11.0
 pi install npm:@juicesharp/rpiv-i18n@2.11.0
 pi install npm:pi-observational-memory@3.1.4
 pi install npm:pi-mcp-adapter@2.37.0
-pi install npm:pi-lsp-adapter@0.1.3
 "$root/scripts/repair-voice-nixos.sh"
-
-# pi-lsp-adapter 0.1.3 always reads this path, even when Pi itself uses
-# PI_CODING_AGENT_DIR.
-lsp_config="$HOME/.pi/agent/lsp.json"
-if [[ ! -e "$lsp_config" ]]; then
-  install -Dm600 "$root/config/lsp.example.json" "$lsp_config"
-fi
 
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 if [[ "$config_home" != /* ]]; then

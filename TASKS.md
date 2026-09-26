@@ -23,7 +23,6 @@ Pendências pequenas do setup do Pi, para atacar uma por vez.
 
 ## Extensões e MCPs
 
-- [ ] **Trial de LSP:** medir se os tools read-only do `pi-lsp-adapter` economizam iterações reais em projetos TypeScript, Go e Rust.
 - [ ] **Trial de Chrome DevTools:** avaliar console, network, DOM e screenshots para depuração do `zapper-dashboard`.
 - [ ] **Codebase Memory:** testar em cerca de dez perguntas de arquitetura/impacto e manter somente se superar `rg` e leituras normais.
 - [ ] **Escopo por projeto:** carregar Slack, banco de dados e outros MCPs apenas onde forem necessários, com escrita sujeita a aprovação.
@@ -39,5 +38,4 @@ Pendências pequenas do setup do Pi, para atacar uma por vez.
 ## Concluído
 
 - [x] Atualizar `rpiv-voice` e `rpiv-i18n` para 2.11.0 e remover os patches locais do Whisper small.
-- [x] Instalar `pi-lsp-adapter` 0.1.3 com instalação automática de servidores desabilitada.
 - [x] Desabilitar a telemetria de instalação e os headers de atribuição do Pi.
