@@ -4,17 +4,14 @@ Pendências pequenas do setup do Pi, para atacar uma por vez.
 
 ## Experiência de uso
 
-- [x] **Voice com Whisper small:** adicionar seletor versionado `base`/`small` ao `rpiv-voice`, manter os modelos separados e configurar o modelo `small` multilingual int8.
-- [x] **Performance do voice:** manter o recognizer em cache, evitar redecodificações parciais repetidas no `small` e finalizar corretamente ao pressionar Enter.
-- [ ] **Benchmark do voice:** comparar precisão e latência de `base` e `small` com frases fixas em português e termos técnicos.
-- [ ] **Vocabulário do voice:** após o benchmark, avaliar correções determinísticas para termos recorrentes como MCP, NixOS, worktree e Dev Container.
+- [ ] **Benchmark do Voice:** medir precisão e latência do Whisper base atual com frases fixas em português e termos técnicos.
+- [ ] **Vocabulário do Voice:** após o benchmark, avaliar correções determinísticas para termos recorrentes como MCP, NixOS, worktree e Dev Container.
 - [x] **Indicador de imagem colada:** ao colar uma imagem no editor, exibir um marcador destacado como `image 1`, `image 2`, etc., semelhante ao OpenCode e ao `paste-highlight` usado para textos grandes.
 - [x] **Teclas no tmux:** habilitar `extended-keys`, formato `csi-u` e suporte `extkeys` do Ghostty para distinguir Enter, Shift+Enter e Ctrl+Enter.
 
 ## Dev Containers e sessões
 
 - [ ] **Roteador de Dev Container:** manter o Pi no host, mas executar `bash` pelo `devcontainer exec`, com detecção explícita da variante e indicação no footer.
-- [ ] **Pi Fork no container:** carregar somente o roteador de Dev Container nos filhos quando o projeto exigir, preservando o modo offline.
 - [ ] **Helper `pi-sesh`:** criar sessões nomeadas em tmux, com worktree opcional, retomada segura e compatibilidade com o fluxo Graphite.
 - [ ] **Concorrência segura:** garantir uma sessão por JSONL e uma worktree por agente que edita; evitar múltiplos escritores no mesmo checkout.
 
@@ -26,7 +23,7 @@ Pendências pequenas do setup do Pi, para atacar uma por vez.
 
 ## Extensões e MCPs
 
-- [ ] **Trial de LSP:** medir se diagnósticos e code actions economizam iterações reais em projetos TypeScript.
+- [ ] **Trial de LSP:** medir se os tools read-only do `pi-lsp-adapter` economizam iterações reais em projetos TypeScript, Go e Rust.
 - [ ] **Trial de Chrome DevTools:** avaliar console, network, DOM e screenshots para depuração do `zapper-dashboard`.
 - [ ] **Codebase Memory:** testar em cerca de dez perguntas de arquitetura/impacto e manter somente se superar `rg` e leituras normais.
 - [ ] **Escopo por projeto:** carregar Slack, banco de dados e outros MCPs apenas onde forem necessários, com escrita sujeita a aprovação.
@@ -36,11 +33,11 @@ Pendências pequenas do setup do Pi, para atacar uma por vez.
 
 - [ ] **Segredos do Dev Container:** retirar `GITHUB_TOKEN` dos build args, revisar injeção de tokens e rotacionar credenciais materializadas durante a auditoria.
 - [ ] **Slack webhook:** remover o webhook aparentemente hardcoded de `supervisor.ts`, revogar/rotacionar se ainda estiver ativo e usar secret store.
-- [ ] **Slack MCP:** resolver o client secret por comando/1Password em vez de mantê-lo no ambiente herdado pelo `pi-fork`.
+- [ ] **Slack MCP:** resolver o client secret por comando/1Password e limitar o servidor a projetos de trabalho.
 - [ ] **Notifier Slack:** usar um bot dedicado quando for necessário gerar notificação real; mensagens self-authored pelo OAuth do usuário apenas aparecem no canal/DM.
 
 ## Concluído
 
-- [x] Atualizar `rpiv-voice` para 2.8.0.
-- [x] Instalar `rpiv-i18n` 2.8.0 e fixar `pt-BR` para evitar autodetecção do idioma.
-- [x] Reaplicar e validar os patches das bibliotecas nativas do voice no NixOS.
+- [x] Atualizar `rpiv-voice` e `rpiv-i18n` para 2.11.0 e remover os patches locais do Whisper small.
+- [x] Instalar `pi-lsp-adapter` 0.1.3 com instalação automática de servidores desabilitada.
+- [x] Desabilitar a telemetria de instalação e os headers de atribuição do Pi.

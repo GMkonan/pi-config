@@ -6,31 +6,35 @@ Registro das peças que compõem o setup e das candidatas para adoção futura.
 
 | Ferramenta | Tipo | Papel |
 |---|---|---|
-| `custom-header` / `custom-footer` | extensions locais | Exibir projeto, branch, modelo, modo e uso de contexto. |
-| `paste-highlight` | extension local | Destacar blocos de texto colados e representar imagens do clipboard como `[image N]` antes de restaurar seus paths no envio. |
-| `plan-mode` | extension local | Planejamento read-only na sessão principal, com bash allowlisted e execução acompanhada. |
-| `task-title` | extension local | Exibir no terminal/tmux o nome da sessão e se o agente está trabalhando. |
+| `custom-header` | extension local | Mostrar sessão, modelo, thinking e contagem dos recursos carregados sem esconder os atalhos essenciais. |
+| `custom-footer` | extension local | Mostrar projeto, branch, estado completo do Git, modelo, statuses de outras extensões e uso de contexto. |
+| `working-indicator` | extension local | Exibir um pulso compacto durante respostas em streaming. |
+| `paste-highlight` | extension local | Destacar blocos colados e representar imagens do clipboard como `[image N]` antes de restaurar seus paths no envio. |
+| `task-title` | extension local | Exibir no terminal/tmux o nome da sessão e distinguir os estados ocioso, trabalhando e aguardando interação. |
 | `/review` | prompt template | Revisar mudanças staged sem alterá-las. |
-| `catppuccin-mocha` | theme | Tema do TUI. |
-| `pi-web-access` | Pi Package externo | Pesquisa e leitura de conteúdo web. |
-| `@juicesharp/rpiv-voice` | Pi Package externo com patches locais versionados | Ditado local em `pt-BR` com Whisper small, recognizer em cache, sem redecodificação parcial repetitiva e com `base` disponível para rollback. |
-| `@juicesharp/rpiv-i18n` | Pi Package externo | Fixa `pt-BR` para o voice, evitando autodetecção por fala, e localiza a interface das extensões rpiv. |
-| `pi-observational-memory` | Pi Package externo | Preservar decisões e continuidade através de compactions. |
-| `pi-fork` | Pi Package externo | Delegar trabalho ruidoso a processos filhos que herdam o branch da sessão. |
-| `pi-mcp-adapter` | Pi Package externo | Cliente MCP lazy com uma superfície proxy pequena, necessário porque MCP não faz parte do core do Pi. |
+| `frontend-design` | skill global | Orientar a criação de interfaces visuais distintas e prontas para produção; distribuída pelo próprio `pi-config`. |
+| `catppuccin-mocha` | theme | Tema do TUI, incluindo cores explícitas para busca e scrollbar fullscreen. |
+| `pi-web-access` 0.31.0 | Pi Package externo | Pesquisa e leitura de conteúdo web. |
+| `@juicesharp/rpiv-voice` 2.11.0 | Pi Package externo | Ditado local em `pt-BR` com o Whisper multilingual base upstream; no NixOS, somente os runtime paths dos addons npm são ajustados para o `nix-ld`. |
+| `@juicesharp/rpiv-i18n` 2.11.0 | Pi Package externo | Fixa `pt-BR` para o Voice e localiza a interface das extensões rpiv. |
+| `pi-observational-memory` 3.1.4 | Pi Package externo | Preservar decisões e continuidade através de compactions. |
+| `pi-mcp-adapter` 2.37.0 | Pi Package externo | Cliente MCP lazy com uma superfície proxy pequena, necessário porque MCP não faz parte do core do Pi. |
+| `pi-lsp-adapter` 0.1.3 | Pi Package externo | Diagnósticos, hover, definições, referências e símbolos por LSP; read-only, lazy e sem instalação automática de servidores. |
 | `codebase-memory-mcp` | servidor MCP local | Índice persistente e knowledge graph do codebase. Declarado em `mcp/mcp.json` e instalado declarativamente pelo flake do sistema. |
 | Slack MCP oficial | servidor MCP remoto | Busca, leitura e envio de mensagens via OAuth. `chat:write` e `im:write` permitem notificações e DMs; requer Slack app e credenciais descritos em `docs/SLACK.md`. |
 
 ## Decisões de arquitetura
 
-- Observational memory roda na sessão principal. `settings.json` configura
-  `pi-fork.extensions: []`, então filhos efêmeros não carregam extensions e não
-  fazem chamadas de observer/reflector sem benefício.
-- `plan-mode` substitui o antigo subagent `plan`.
-- O subagent `build`, o agent `plan`, a extensão local `subagent` e o prompt
-  `/plan-build` foram removidos. `pi-fork` cobre a delegação necessária sem uma
-  segunda taxonomia de agents.
+- Não há plan mode, agents ou subagentes globais. Planejamento e execução usam a
+  sessão principal e as ferramentas normais do Pi.
+- O LSP usa `installMode: "off"`: binários pertencem ao Nix ou a outro gerenciador
+  do sistema; a extensão não baixa nem remove servidores automaticamente.
 - O MCP adapter mantém schemas de tools fora do contexto até serem necessários.
+- `pi-web-access` 0.31.0 continua registrando os tools de forma eager neste pacote
+  Nix do Pi: a detecção upstream de 0.86.1+ falha ao resolver o próprio pacote,
+  embora pesquisa e leitura funcionem normalmente.
+- A telemetria de instalação e os headers de atribuição ficam desabilitados por
+  `enableInstallTelemetry: false`; verificações normais de atualização continuam.
 - Configuração sensível, tokens e `auth.json` nunca pertencem a este repositório.
 
 ## Candidata: MCP Gateway
@@ -38,9 +42,8 @@ Registro das peças que compõem o setup e das candidatas para adoção futura.
 **Estado:** não adotado.
 
 Um gateway externo pode agregar, autenticar, filtrar e observar vários servidores
-MCP. Neste setup ele seria redundante enquanto existe somente o
-`codebase-memory-mcp`, pois o `pi-mcp-adapter` já oferece descoberta lazy e uma
-superfície constante para o modelo.
+MCP. Neste setup ele seria redundante enquanto o `pi-mcp-adapter` já oferece
+descoberta lazy e uma superfície constante para o modelo.
 
 Reavaliar quando houver uma destas necessidades:
 

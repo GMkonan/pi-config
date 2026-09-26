@@ -8,16 +8,46 @@ if ! command -v pi >/dev/null 2>&1; then
   exit 1
 fi
 
-pi install "$root"
-pi install npm:pi-web-access@0.30.0
-pi install npm:@juicesharp/rpiv-voice@2.8.0
-pi install npm:@juicesharp/rpiv-i18n@2.8.0
-pi install npm:pi-observational-memory@3.1.4
-pi install npm:pi-mcp-adapter@2.34.0
-pi install git:github.com/elpapi42/pi-fork@e69725c396030cb9e3b119286beca53f47a2305f
+agent_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+settings_file="$agent_dir/settings.json"
+pi_fork_sources="$(node - "$settings_file" <<'NODE'
+const fs = require("node:fs");
+const path = require("node:path");
+const settingsPath = process.argv[2];
+const settings = fs.existsSync(settingsPath)
+  ? JSON.parse(fs.readFileSync(settingsPath, "utf8"))
+  : {};
+const sources = Array.isArray(settings.packages)
+  ? settings.packages.filter(source => typeof source === "string" && source.includes("pi-fork"))
+  : [];
+settings.enableInstallTelemetry = false;
+delete settings["pi-fork"];
+fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, { mode: 0o600 });
+fs.chmodSync(settingsPath, 0o600);
+process.stdout.write(sources.join("\n"));
+NODE
+)"
 
-"$root/scripts/patch-voice-model-selector.py"
-"$root/scripts/patch-voice-performance.py"
+while IFS= read -r source; do
+  [[ -n "$source" ]] && pi remove "$source"
+done <<< "$pi_fork_sources"
+
+pi install "$root"
+pi install npm:pi-web-access@0.31.0
+pi install npm:@juicesharp/rpiv-voice@2.11.0
+pi install npm:@juicesharp/rpiv-i18n@2.11.0
+pi install npm:pi-observational-memory@3.1.4
+pi install npm:pi-mcp-adapter@2.37.0
+pi install npm:pi-lsp-adapter@0.1.3
+"$root/scripts/repair-voice-nixos.sh"
+
+# pi-lsp-adapter 0.1.3 always reads this path, even when Pi itself uses
+# PI_CODING_AGENT_DIR.
+lsp_config="$HOME/.pi/agent/lsp.json"
+if [[ ! -e "$lsp_config" ]]; then
+  install -Dm600 "$root/config/lsp.example.json" "$lsp_config"
+fi
 
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 if [[ "$config_home" != /* ]]; then
@@ -31,10 +61,15 @@ if [[ ! -e "$locale_config" ]]; then
 fi
 
 voice_config="$config_home/rpiv-voice/voice.json"
-if [[ ! -e "$voice_config" ]]; then
-  mkdir -p "$(dirname "$voice_config")"
-  printf '%s\n' '{ "whisperModelType": "small" }' > "$voice_config"
-  chmod 600 "$voice_config"
+if [[ -e "$voice_config" ]]; then
+  node - "$voice_config" <<'NODE'
+const fs = require("node:fs");
+const file = process.argv[2];
+const config = JSON.parse(fs.readFileSync(file, "utf8"));
+delete config.whisperModelType;
+fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`);
+fs.chmodSync(file, 0o600);
+NODE
 fi
 
 if ! command -v codebase-memory-mcp >/dev/null 2>&1; then

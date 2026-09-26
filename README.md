@@ -24,9 +24,10 @@ reproduzível e não receba mudanças incompatíveis silenciosamente.
 
 ```text
 extensions/       extensões locais
-  plan-mode/      modo de planejamento read-only
   task-title.ts   título da tarefa e estado do Pi no terminal/tmux
+  working-indicator.ts  indicador animado durante respostas
 prompts/          comandos/prompt templates
+skills/           skills globais distribuídas pelo package
 themes/           temas do TUI
 mcp/              servidores MCP declarados pelo package
 agents/           política e futuras definições de agents
@@ -56,27 +57,19 @@ pi install git:github.com/GMkonan/pi-config
 
 Reinicie o Pi após instalar ou atualizar extensões.
 
-O `rpiv-voice` e o `rpiv-i18n` permanecem fixados em `2.8.0`, versão revisada
-pelos patches locais. Antes de atualizar esse par, revise o upstream e adapte os
-scripts; `scripts/repatch-voice.sh` reaplica tanto o seletor local de modelo
-quanto os patches de desempenho somente à versão suportada.
+O bootstrap fixa `rpiv-voice` e `rpiv-i18n` em `2.11.0`. O Voice usa o
+Whisper multilingual `base` fornecido pelo upstream, sem patches de aplicação
+ou seleção alternativa de modelo. No NixOS, `scripts/repair-voice-nixos.sh`
+ajusta apenas o runtime path dos addons npm para o caminho estável do `nix-ld`.
+O idioma permanece em
+`~/.config/rpiv-i18n/locale.json`, criado como `pt-BR` em instalações novas e
+alterável por `/languages`.
 
-O bootstrap instala `@juicesharp/rpiv-i18n`, seleciona `pt-BR` e configura o
-Whisper `small` em instalações novas. O idioma fica em
-`~/.config/rpiv-i18n/locale.json` e pode ser alterado por `/languages`; o modelo
-fica em `~/.config/rpiv-voice/voice.json`:
-
-```json
-{ "whisperModelType": "small" }
-```
-
-O `rpiv-voice` 2.8.0 ainda fixa o modelo `base` upstream. Por isso
-`scripts/patch-voice-model-selector.py` aplica um patch versionado que aceita
-somente `base` ou `small`, mantendo-os em diretórios separados. Para tornar o
-`small` utilizável, `scripts/patch-voice-performance.py` mantém o recognizer em
-cache, desativa redecodificações parciais caras nesse modelo e aguarda a
-transcrição final ao pressionar Enter. Os scripts falham com segurança quando
-a versão instalada muda e exigem revisão antes de alterar uma versão futura.
+O `pi-lsp-adapter` fica fixado em `0.1.3`. Sua configuração padrão está em
+`config/lsp.example.json`: servidores iniciam sob demanda, usam binários já
+disponíveis no sistema e nunca são instalados automaticamente. O bootstrap
+copia essa configuração para `~/.pi/agent/lsp.json` somente quando o arquivo
+ainda não existe.
 
 ## MCP
 

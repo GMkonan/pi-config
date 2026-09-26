@@ -5,6 +5,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 
 const MAX_TASK_LENGTH = 48;
+type Activity = "idle" | "running" | "waiting";
 
 function sanitizeTaskName(value: string): string {
 	const withoutControlCharacters = Array.from(value, (character) => {
@@ -12,31 +13,33 @@ function sanitizeTaskName(value: string): string {
 		return codePoint < 32 || codePoint === 127 ? " " : character;
 	}).join("");
 	const sanitized = withoutControlCharacters.replace(/\s+/g, " ").trim();
+	const characters = Array.from(sanitized);
 
-	if (sanitized.length <= MAX_TASK_LENGTH) return sanitized;
-	return `${sanitized.slice(0, MAX_TASK_LENGTH - 1)}…`;
+	if (characters.length <= MAX_TASK_LENGTH) return sanitized;
+	return `${characters.slice(0, MAX_TASK_LENGTH - 1).join("")}…`;
 }
 
-export default function (pi: ExtensionAPI) {
-	let busy = false;
+export default function (pi: ExtensionAPI): void {
+	let activity: Activity = "idle";
+	let agentRunning = false;
 	let startupTimer: ReturnType<typeof setTimeout> | undefined;
 
-	function updateTitle(ctx: ExtensionContext) {
+	function updateTitle(ctx: ExtensionContext): void {
 		if (!ctx.hasUI) return;
 
 		const sessionName = pi.getSessionName();
 		const directoryName = path.basename(ctx.cwd) || ctx.cwd;
 		const taskName = sanitizeTaskName(sessionName || directoryName) || "pi";
-		const state = busy ? "●" : "○";
+		const state = activity === "running" ? "●" : activity === "waiting" ? "?" : "○";
 
 		ctx.ui.setTitle(`${state} ${taskName}`);
 	}
 
 	pi.on("session_start", (_event, ctx) => {
+		agentRunning = false;
+		activity = "idle";
 		updateTitle(ctx);
 
-		// Pi applies its default title during startup, after session_start.
-		// Reapply ours on the next event-loop tick so the task title wins.
 		startupTimer = setTimeout(() => {
 			startupTimer = undefined;
 			updateTitle(ctx);
@@ -48,17 +51,31 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.on("agent_start", (_event, ctx) => {
-		busy = true;
+		agentRunning = true;
+		activity = "running";
+		updateTitle(ctx);
+	});
+
+	pi.on("ui_prompt_start", (_event, ctx) => {
+		activity = "waiting";
+		updateTitle(ctx);
+	});
+
+	pi.on("ui_prompt_end", (_event, ctx) => {
+		activity = agentRunning ? "running" : "idle";
 		updateTitle(ctx);
 	});
 
 	pi.on("agent_settled", (_event, ctx) => {
-		busy = false;
+		agentRunning = false;
+		activity = "idle";
 		updateTitle(ctx);
 	});
 
 	pi.on("session_shutdown", () => {
 		if (startupTimer) clearTimeout(startupTimer);
 		startupTimer = undefined;
+		agentRunning = false;
+		activity = "idle";
 	});
 }

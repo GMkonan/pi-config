@@ -1,355 +1,229 @@
-/**
- * Minimal Footer — shows only what matters.
- *
- * Left:  ~/path/to/project git:branch± • model (thinking) • goal
- * Right: [####.........] 40% (128K)
- *
- * Based on: https://gist.github.com/deepakness/81e716c4654d22bee6b3a830553ec004
- * Adapted for pi 0.84.1: cwd captured from ctx (pi.cwd not public),
- * added "max" thinking level and opencode provider color.
- */
-
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
-type RgbColor = { r: number; g: number; b: number };
-
-type ModelWithThinking = {
-  id?: string;
-  provider?: string;
-  reasoning?: boolean;
-  contextWindow?: number;
-  thinkingLevelMap?: Partial<Record<ThinkingLevel, string | null>>;
+type ModelInfo = {
+	id?: string;
+	provider?: string;
+	contextWindow?: number;
 };
 
-const THINKING_LEVELS: ThinkingLevel[] = [
-  "off",
-  "minimal",
-  "low",
-  "medium",
-  "high",
-  "xhigh",
-  "max",
-];
-
-const EFFORT_COLOR_STOPS: RgbColor[] = [
-  { r: 142, g: 142, b: 147 }, // gray
-  { r: 52, g: 199, b: 89 },   // green
-  { r: 255, g: 214, b: 10 },  // yellow
-  { r: 255, g: 159, b: 10 },  // orange
-  { r: 255, g: 69, b: 58 },   // red
-];
-
-const CONTEXT_COLOR_STOPS: RgbColor[] = [
-  { r: 52, g: 199, b: 89 },   // green
-  { r: 255, g: 214, b: 10 },  // yellow
-  { r: 255, g: 159, b: 10 },  // orange
-  { r: 255, g: 69, b: 58 },   // red
-];
-
-const PROVIDER_COLORS: Record<string, RgbColor> = {
-  anthropic: { r: 191, g: 90, b: 242 },
-  openai: { r: 52, g: 199, b: 89 },
-  google: { r: 66, g: 133, b: 244 },
-  gemini: { r: 66, g: 133, b: 244 },
-  github: { r: 175, g: 82, b: 222 },
-  copilot: { r: 175, g: 82, b: 222 },
-  openrouter: { r: 255, g: 159, b: 10 },
-  ollama: { r: 142, g: 142, b: 147 },
-  local: { r: 142, g: 142, b: 147 },
-  opencode: { r: 245, g: 194, b: 231 }, // catppuccin pink-ish
-  "opencode-go": { r: 245, g: 194, b: 231 },
+const THINKING_COLORS: Record<
+	ThinkingLevel,
+	| "thinkingOff"
+	| "thinkingMinimal"
+	| "thinkingLow"
+	| "thinkingMedium"
+	| "thinkingHigh"
+	| "thinkingXhigh"
+	| "thinkingMax"
+> = {
+	off: "thinkingOff",
+	minimal: "thinkingMinimal",
+	low: "thinkingLow",
+	medium: "thinkingMedium",
+	high: "thinkingHigh",
+	xhigh: "thinkingXhigh",
+	max: "thinkingMax",
 };
 
-export default function (pi: ExtensionAPI) {
-  let tuiRef: { requestRender(): void } | null = null;
-  let thinkingLevel: string = "off";
-  let currentModel: ModelWithThinking | undefined;
-  let modelId: string | undefined;
-  let contextWindow: number | undefined;
-  let isDirty = false;
-  let currentCwd: string = process.cwd();
-  let sessionActive = false;
+function formatContextWindow(value: number | undefined): string {
+	if (!value) return "";
+	if (value >= 1_000_000) {
+		return `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}M`;
+	}
+	if (value >= 1_000) {
+		return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}K`;
+	}
+	return String(value);
+}
 
-  // Keep values fresh so renders pick up changes immediately
-  pi.on("model_select", async (event, _ctx) => {
-    currentModel = event.model as ModelWithThinking;
-    modelId = event.model.id;
-    contextWindow = event.model.contextWindow;
-    tuiRef?.requestRender();
-  });
+function formatDirectory(value: string): string {
+	const home = process.env.HOME || process.env.USERPROFILE;
+	const insideHome = home && (value === home || value.startsWith(`${home}/`));
+	const path = insideHome ? `~${value.slice(home.length)}` : value;
+	const parts = path.split("/").filter(Boolean);
+	if (visibleWidth(path) <= 42 || parts.length < 3) return truncateToWidth(path, 42);
 
-  pi.on("thinking_level_select", async (event, _ctx) => {
-    thinkingLevel = event.level;
-    tuiRef?.requestRender();
-  });
+	const first = path.startsWith("~/") ? `~/${parts[1]}` : path.startsWith("/") ? `/${parts[0]}` : parts[0];
+	const shortened = `${first}/…/${parts.at(-1)}`;
+	return truncateToWidth(shortened, 42);
+}
 
-  async function refreshDirty() {
-    if (!sessionActive) return;
+function align(left: string, right: string, width: number): string {
+	if (width <= 0) return "";
+	const rightWidth = visibleWidth(right);
+	if (rightWidth >= width) return truncateToWidth(right, width, "");
 
-    const cwd = currentCwd;
-    // Start every pi.exec call before yielding. A session replacement can make
-    // this extension's pi instance stale while an earlier command is awaited.
-    const [insideWorkTree, result, resultStaged] = await Promise.all([
-      pi
-        .exec("git", ["rev-parse", "--is-inside-work-tree"], { cwd })
-        .catch(() => undefined),
-      pi.exec("git", ["diff", "--stat"], { cwd }).catch(() => undefined),
-      pi
-        .exec("git", ["diff", "--cached", "--stat"], { cwd })
-        .catch(() => undefined),
-    ]);
+	const leftWidth = visibleWidth(left);
+	if (leftWidth + rightWidth + 1 <= width) {
+		return left + " ".repeat(width - leftWidth - rightWidth) + right;
+	}
 
-    // Ignore a result produced after this session was replaced or its cwd changed.
-    if (!sessionActive || cwd !== currentCwd) return;
+	const availableLeft = Math.max(0, width - rightWidth - 1);
+	const clippedLeft = truncateToWidth(left, availableLeft, "");
+	return clippedLeft + " ".repeat(Math.max(1, width - visibleWidth(clippedLeft) - rightWidth)) + right;
+}
 
-    const dirty =
-      insideWorkTree?.stdout.trim() === "true" &&
-      ((result?.stdout.trim().length ?? 0) > 0 ||
-        (resultStaged?.stdout.trim().length ?? 0) > 0);
-    if (dirty !== isDirty) {
-      isDirty = dirty;
-      tuiRef?.requestRender();
-    }
-  }
+export default function (pi: ExtensionAPI): void {
+	let tuiRef: { requestRender(): void } | undefined;
+	let active = false;
+	let generation = 0;
+	let currentCwd = process.cwd();
+	let currentModel: ModelInfo | undefined;
+	let thinkingLevel: ThinkingLevel = "off";
+	let dirty = false;
+	let refreshRunning = false;
+	let refreshQueued = false;
 
-  pi.on("turn_end", async () => {
-    await refreshDirty();
-  });
+	function requestRender(): void {
+		tuiRef?.requestRender();
+	}
 
-  function formatContextWindow(n: number | undefined): string {
-    if (!n) return "";
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1)}K`;
-    return `${n}`;
-  }
+	function scheduleDirtyRefresh(): void {
+		if (!active) return;
+		if (refreshRunning) {
+			refreshQueued = true;
+			return;
+		}
 
-  function middleTruncatePath(path: string, maxWidth = 42): string {
-    if (visibleWidth(path) <= maxWidth) return path;
+		const runGeneration = generation;
+		const cwd = currentCwd;
+		refreshRunning = true;
+		void pi
+			.exec("git", ["status", "--porcelain", "--untracked-files=normal"], {
+				cwd,
+				timeout: 5000,
+			})
+			.then((result) => {
+				if (!active || generation !== runGeneration || currentCwd !== cwd) return;
+				const nextDirty = result.code === 0 && result.stdout.trim().length > 0;
+				if (nextDirty !== dirty) {
+					dirty = nextDirty;
+					requestRender();
+				}
+			})
+			.catch(() => undefined)
+			.finally(() => {
+				if (generation !== runGeneration) return;
+				refreshRunning = false;
+				if (refreshQueued) {
+					refreshQueued = false;
+					scheduleDirtyRefresh();
+				}
+			});
+	}
 
-    const parts = path.split("/").filter(Boolean);
-    const isHomePath = path.startsWith("~/");
-    const isAbsolutePath = path.startsWith("/");
-    const first = parts[0] === "~" ? parts[1] : parts[0];
-    const last = parts[parts.length - 1];
+	pi.on("model_select", (event) => {
+		currentModel = event.model as ModelInfo;
+		requestRender();
+	});
 
-    if (!first || !last) return truncateToWidth(path, maxWidth);
+	pi.on("thinking_level_select", (event) => {
+		thinkingLevel = event.level as ThinkingLevel;
+		requestRender();
+	});
 
-    const prefix = isHomePath
-      ? `~/${first}`
-      : isAbsolutePath
-        ? `/${first}`
-        : first;
-    const shortened = `${prefix}/.../${last}`;
+	pi.on("tool_execution_end", (event) => {
+		if (event.toolName === "edit" || event.toolName === "write" || event.toolName === "bash") {
+			scheduleDirtyRefresh();
+		}
+	});
 
-    return visibleWidth(shortened) <= maxWidth
-      ? shortened
-      : truncateToWidth(shortened, maxWidth);
-  }
+	pi.on("turn_end", () => {
+		scheduleDirtyRefresh();
+	});
 
-  function getCurrentDirectory(contextCwd: string): string {
-    const home = process.env.HOME || process.env.USERPROFILE;
-    const candidates = [currentCwd, contextCwd, process.env.PWD, process.cwd()].filter(
-      (candidate): candidate is string => typeof candidate === "string" && candidate.length > 0,
-    );
+	pi.on("session_start", (_event, ctx) => {
+		active = true;
+		generation += 1;
+		currentCwd = ctx.cwd;
+		currentModel = ctx.model as ModelInfo | undefined;
+		thinkingLevel = pi.getThinkingLevel() as ThinkingLevel;
+		dirty = false;
+		refreshRunning = false;
+		refreshQueued = false;
+		scheduleDirtyRefresh();
 
-    return candidates.find((candidate) => !home || candidate !== home) ?? candidates[0] ?? contextCwd;
-  }
+		ctx.ui.setFooter((tui, theme, footerData) => {
+			tuiRef = tui;
+			const unsubscribe = footerData.onBranchChange(() => {
+				scheduleDirtyRefresh();
+				tui.requestRender();
+			});
 
-  function formatDirectory(path: string): string {
-    const home = process.env.HOME || process.env.USERPROFILE;
-    let cwd = path;
-    if (home && cwd.startsWith(home)) {
-      cwd = "~" + cwd.slice(home.length);
-    }
-    return middleTruncatePath(cwd);
-  }
+			return {
+				dispose() {
+					unsubscribe();
+					if (tuiRef === tui) tuiRef = undefined;
+				},
+				invalidate() {
+					scheduleDirtyRefresh();
+				},
+				render(width: number): string[] {
+					const cwd = formatDirectory(ctx.cwd);
+					const slash = cwd.lastIndexOf("/");
+					const prefix = slash >= 0 ? cwd.slice(0, slash + 1) : "";
+					const project = slash >= 0 ? cwd.slice(slash + 1) : cwd;
+					const pathText =
+						theme.fg("dim", prefix) + theme.fg("accent", theme.bold(project || cwd));
 
-  function getExtensionStatusMap(statuses: unknown): Map<string, string> {
-    if (statuses instanceof Map) {
-      return statuses;
-    }
-    return new Map();
-  }
+					const branch = footerData.getGitBranch();
+					const branchText = branch
+						? theme.fg(dirty ? "warning" : "success", `git:${branch}${dirty ? "*" : ""}`)
+						: "";
 
-  function isThinkingLevel(value: string): value is ThinkingLevel {
-    return THINKING_LEVELS.includes(value as ThinkingLevel);
-  }
+					const model = currentModel ?? (ctx.model as ModelInfo | undefined);
+					const modelName = model?.id ?? "no-model";
+					const provider = model?.provider;
+					const modelText = provider
+						? `${theme.fg("muted", provider)}${theme.fg("dim", "/")}${theme.fg("accent", modelName)}`
+						: theme.fg("accent", modelName);
+					const thinkingText = theme.fg(THINKING_COLORS[thinkingLevel], `(${thinkingLevel})`);
 
-  function getSupportedThinkingLevels(model: ModelWithThinking | undefined): ThinkingLevel[] {
-    if (!model || model.reasoning === false) return ["off"];
+					const primary = [pathText, branchText, `${modelText} ${thinkingText}`]
+						.filter(Boolean)
+						.join(theme.fg("dim", " • "));
 
-    const map = model.thinkingLevelMap ?? {};
-    const supported = THINKING_LEVELS.filter((level) => map[level] !== null);
-    return supported.length > 0 ? supported : ["off"];
-  }
+					const statuses = [...footerData.getExtensionStatuses().values()].filter(
+						(status) => status.trim().length > 0,
+					);
+					const statusText = statuses.join(theme.fg("dim", " • "));
 
-  function interpolateColor(position: number, stops: RgbColor[] = EFFORT_COLOR_STOPS): RgbColor {
-    const safeStops = stops.length > 0 ? stops : EFFORT_COLOR_STOPS;
-    const clamped = Math.max(0, Math.min(1, position));
-    const scaled = clamped * (safeStops.length - 1);
-    const leftIndex = Math.floor(scaled);
-    const rightIndex = Math.min(safeStops.length - 1, leftIndex + 1);
-    const mix = scaled - leftIndex;
-    const left = safeStops[leftIndex];
-    const right = safeStops[rightIndex];
+					const usage = ctx.getContextUsage();
+					const percent = usage?.percent;
+					const numericPercent = typeof percent === "number" ? Math.max(0, Math.min(100, percent)) : 0;
+					const color =
+						typeof percent !== "number" ? "dim" : numericPercent >= 80 ? "error" : numericPercent >= 60 ? "warning" : "success";
+					const blocks = 10;
+					const filled = Math.round((numericPercent / 100) * blocks);
+					const bar = theme.fg(color, "#".repeat(filled)) + theme.fg("dim", ".".repeat(blocks - filled));
+					const contextWindow = formatContextWindow(model?.contextWindow);
+					const contextText = `${theme.fg(color, "[")}${bar}${theme.fg(color, "]")} ${theme.fg(color, typeof percent === "number" ? `${Math.round(percent)}%` : "?")}${
+						contextWindow ? theme.fg("dim", ` (${contextWindow})`) : ""
+					}`;
 
-    return {
-      r: Math.round(left.r + (right.r - left.r) * mix),
-      g: Math.round(left.g + (right.g - left.g) * mix),
-      b: Math.round(left.b + (right.b - left.b) * mix),
-    };
-  }
+					const combinedLeft = statusText
+						? `${primary}${theme.fg("dim", " • ")}${statusText}`
+						: primary;
+					if (visibleWidth(combinedLeft) + visibleWidth(contextText) + 1 <= width) {
+						return [align(combinedLeft, contextText, width)];
+					}
 
-  function colorRgb(text: string, { r, g, b }: RgbColor): string {
-    return `\x1b[38;2;${r};${g};${b}m${text}\x1b[39m`;
-  }
+					return [
+						truncateToWidth(primary, width, ""),
+						align(statusText, contextText, width),
+					];
+				},
+			};
+		});
+	});
 
-  function colorThinkingLabel(level: string, label: string, model: ModelWithThinking | undefined): string {
-    if (!isThinkingLevel(level)) return label;
-
-    const supported = getSupportedThinkingLevels(model);
-    const supportedIndex = supported.indexOf(level);
-    const fallbackIndex = THINKING_LEVELS.indexOf(level);
-    const position =
-      supportedIndex >= 0
-        ? supported.length <= 1
-          ? 0
-          : supportedIndex / (supported.length - 1)
-        : fallbackIndex / (THINKING_LEVELS.length - 1);
-
-    return colorRgb(label, interpolateColor(position));
-  }
-
-  function getProviderColor(provider: string | undefined): RgbColor | undefined {
-    if (!provider) return undefined;
-    const normalized = provider.toLowerCase();
-    return PROVIDER_COLORS[normalized];
-  }
-
-  pi.on("session_start", async (_event, ctx) => {
-    sessionActive = true;
-    currentCwd = ctx.cwd;
-    currentModel = ctx.model as ModelWithThinking | undefined;
-    modelId = ctx.model?.id;
-    contextWindow = ctx.model?.contextWindow;
-    thinkingLevel = pi.getThinkingLevel();
-    void refreshDirty();
-
-    ctx.ui.setFooter((tui, theme, footerData) => {
-      tuiRef = tui;
-      const unsub = footerData.onBranchChange(() => tui.requestRender());
-
-      return {
-        dispose() {
-          unsub();
-          tuiRef = null;
-        },
-        invalidate() {
-          void refreshDirty();
-        },
-        render(width: number): string[] {
-          // ── Current directory (with ~ for home) ──
-          const cwd = formatDirectory(getCurrentDirectory(ctx.cwd));
-
-          // ── Git branch + dirty marker ──
-          const branch = footerData.getGitBranch();
-          const dirtyMarker = branch && isDirty ? "±" : "";
-          const branchStr = branch ? `git:${branch}${dirtyMarker}` : "";
-          const branchColor: "warning" | "success" = isDirty ? "warning" : "success";
-
-          // ── Model + dynamically colored thinking effort ──
-          const activeModel = currentModel || (ctx.model as ModelWithThinking | undefined);
-          const model = modelId || activeModel?.id || ctx.model?.id || "none";
-          const provider = activeModel?.provider;
-          const supportedThinkingLevels = getSupportedThinkingLevels(activeModel);
-          const showThinkingLabel =
-            thinkingLevel !== "off" || supportedThinkingLevels.length > 1;
-          const thinkLabel = showThinkingLabel
-            ? colorThinkingLabel(thinkingLevel, ` (${thinkingLevel})`, activeModel)
-            : "";
-          const providerColor = getProviderColor(provider);
-          const modelStr = provider && !model.includes("/")
-            ? (providerColor ? colorRgb(provider, providerColor) : theme.fg("muted", provider)) +
-              theme.fg("dim", "/") +
-              theme.fg("accent", model)
-            : theme.fg("accent", model);
-
-          // ── Mode indicator (plan-mode extension) + goal/status from other extensions ──
-          const statusMap = getExtensionStatusMap(footerData.getExtensionStatuses?.());
-          const planStatus = statusMap.get("plan-mode");
-          // planStatus already comes pre-colored from the plan-mode extension
-          // ("⏸ plan" while planning, "📋 n/m" while executing); when absent
-          // we're in normal build mode.
-          const modeStr = planStatus ?? theme.fg("success", "build");
-          const goalStatus = [...statusMap.values()].find((status) => /goal/i.test(status));
-          const goalStr = goalStatus ? theme.fg("warning", goalStatus) : "";
-
-          const lastSlash = cwd.lastIndexOf("/");
-          const pathPrefix = lastSlash >= 0 ? cwd.slice(0, lastSlash + 1) : "";
-          const projectName = lastSlash >= 0 ? cwd.slice(lastSlash + 1) : cwd;
-          const pathStr = projectName
-            ? theme.fg("dim", pathPrefix) + theme.fg("accent", theme.bold(projectName))
-            : theme.fg("dim", cwd);
-
-          const leftParts = [
-            pathStr,
-            branchStr ? theme.fg(branchColor, branchStr) : "",
-            modelStr + thinkLabel,
-            modeStr,
-            goalStr,
-          ].filter(Boolean);
-          const left = leftParts.join(theme.fg("dim", " • "));
-
-          // ── Context bar ──
-          const usage = ctx.getContextUsage();
-          const pct = usage?.percent ?? 0;
-          const pctStr =
-            usage?.percent !== null && usage?.percent !== undefined ? `${Math.round(pct)}%` : "?";
-
-          // Smooth context color: green → yellow → orange → red
-          const ctxRgb = interpolateColor(pct / 100, CONTEXT_COLOR_STOPS);
-
-          const BLOCKS = 10;
-          const filled = Math.max(
-            0,
-            Math.min(BLOCKS, Math.round((pct / 100) * BLOCKS))
-          );
-          const bar =
-            colorRgb("#".repeat(filled), ctxRgb) +
-            theme.fg("dim", ".".repeat(BLOCKS - filled));
-          const ctxWinStr = contextWindow ? ` (${formatContextWindow(contextWindow)})` : "";
-          const right =
-            colorRgb("[", ctxRgb) +
-            bar +
-            colorRgb("] ", ctxRgb) +
-            colorRgb(pctStr, ctxRgb) +
-            (pct >= 75 ? colorRgb(ctxWinStr, ctxRgb) : theme.fg("dim", ctxWinStr));
-
-          // ── Layout: single row if it fits, else split into two ──
-          const leftW = visibleWidth(left);
-          const rightW = visibleWidth(right);
-
-          if (leftW + rightW <= width) {
-            // Single row: left … right
-            const pad = " ".repeat(width - leftW - rightW);
-            return [truncateToWidth(left + pad + right, width)];
-          }
-
-          // Two rows: left on top, context bar left-aligned below
-          return [
-            truncateToWidth(left, width),
-            truncateToWidth(right, width),
-          ];
-        },
-      };
-    });
-  });
-
-  pi.on("session_shutdown", () => {
-    sessionActive = false;
-    tuiRef = null;
-  });
+	pi.on("session_shutdown", () => {
+		active = false;
+		generation += 1;
+		refreshQueued = false;
+		tuiRef = undefined;
+	});
 }
